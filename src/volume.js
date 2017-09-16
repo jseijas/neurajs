@@ -69,12 +69,43 @@ class Volume extends Serializable {
     return new Volume(this.width, this.height, this.depth, 0.0);
   }
 
-  clone() {
-    const V = this.cloneAndZero();
+  clone(opts) {
+    let V;
+    if (opts.isJSON) {
+      V = { width: this.width, height: this.height, depth: this.depth };
+      V.w = Utils.zeros(this.size);
+      V.dw = Utils.zeros(this.size);
+    } else {
+      V = this.cloneAndZero();
+    }
     for (var i = 0; i < this.size; i += 1) {
       V.w[i] = this.w[i];
     }
+    if (opts.isSnapshot) {
+      for (var i = 0; i < this.size; i += 1) {
+        V.dw[i] = this.dw[i];
+      }
+    } else {
+      delete V.dw;
+    }
     return V;
+  }
+    
+  assign(src, opts) {
+    this.width = src.width;
+    this.height = src.height;
+    this.depth = src.depth;
+    this.size = this.width * this.height * this.depth;
+    this.w = Utils.zeros(this.size);
+    this.dw = Utils.zeros(this.size);
+    for (var i = 0; i < this.size; i += 1) {
+      this.w[i] = src.w[i];
+    }
+    if (src.dw) {
+      for (var i = 0; i < this.size; i += 1) {
+        this.dw[i] = src.dw[i];
+      }
+    }
   }
 
   addFrom(V) { 

@@ -22,10 +22,11 @@ module.exports = {
   TanhLayer : require('./layers/tanh_layer'),
   VectorLayer : require('./layers/vector_layer'),
   Net : require('./net'),
-  Trainer: require('./trainer')
+  Trainer: require('./trainer'),
+  Neurapp: require('./neurapp')
 }
 
-},{"./layer":2,"./layers/activation_layer":3,"./layers/convolutional_layer":4,"./layers/dropout_layer":5,"./layers/fully_connected_layer":6,"./layers/input_layer":7,"./layers/linear_layer":8,"./layers/lrn_layer":9,"./layers/maxout_layer":10,"./layers/parented_layer":11,"./layers/pool_layer":12,"./layers/regression_layer":13,"./layers/relu_layer":14,"./layers/sigmoid_layer":15,"./layers/softmax_layer":16,"./layers/svm_layer":17,"./layers/tanh_layer":18,"./layers/vector_layer":19,"./net":20,"./serializable":21,"./trainer":22,"./utils":23,"./volume":24}],2:[function(require,module,exports){
+},{"./layer":2,"./layers/activation_layer":3,"./layers/convolutional_layer":4,"./layers/dropout_layer":5,"./layers/fully_connected_layer":6,"./layers/input_layer":7,"./layers/linear_layer":8,"./layers/lrn_layer":9,"./layers/maxout_layer":10,"./layers/parented_layer":11,"./layers/pool_layer":12,"./layers/regression_layer":13,"./layers/relu_layer":14,"./layers/sigmoid_layer":15,"./layers/softmax_layer":16,"./layers/svm_layer":17,"./layers/tanh_layer":18,"./layers/vector_layer":19,"./net":20,"./neurapp":21,"./serializable":22,"./trainer":23,"./utils":24,"./volume":25}],2:[function(require,module,exports){
 const Serializable = require('./serializable');
 
 class Layer extends Serializable {
@@ -75,11 +76,38 @@ class Layer extends Serializable {
   getSize() {
     return this.width * this.height * this.depth;
   }
+
+  clone(opts) {
+    let result;
+    let settings = JSON.parse(JSON.stringify(this.settings))
+    if (opts.isJSON) {
+      result = {};
+      result.settings = settings;
+      result.width = this.width;
+      result.height = this.height;
+      result.depth = this.depth;
+    } else {
+      result = new this.constructor(settings);
+    }
+    if (this.volume) {
+      result.volume = this.clone(opts);
+    }
+    return result;
+  }
+
+  assign(src, opts) {
+    this.settings = JSON.parse(JSON.stringify(this.settings))
+    this.parent = settings.parent;
+    this.width = src.width;
+    this.height = src.height;
+    this.depth = src.depth;
+    this.volume.assign(src.volume);
+  }
 }
 
 module.exports = Layer;
 
-},{"./serializable":21}],3:[function(require,module,exports){
+},{"./serializable":22}],3:[function(require,module,exports){
 const ParentedLayer = require('./parented_layer');
 
 class ActivationLayer extends ParentedLayer {
@@ -206,7 +234,7 @@ class ConvolutionalLayer extends Layer {
 }
 
 module.exports = ConvolutionalLayer;
-},{"../layer":2,"../utils":23,"../volume":24}],5:[function(require,module,exports){
+},{"../layer":2,"../utils":24,"../volume":25}],5:[function(require,module,exports){
 const ParentedLayer = require('./parented_layer');
 const Utils = require('../utils');
 
@@ -249,7 +277,7 @@ class DropoutLayer extends ParentedLayer {
 }
 
 module.exports = DropoutLayer;
-},{"../utils":23,"./parented_layer":11}],6:[function(require,module,exports){
+},{"../utils":24,"./parented_layer":11}],6:[function(require,module,exports){
 const VectorLayer = require('./vector_layer');
 const Volume = require('../volume');
 const Utils = require('../utils');
@@ -258,7 +286,7 @@ class FullyConnectedLayer extends VectorLayer {
   constructor(settings) {
     super(settings);
     settings = settings || {};
-    this.depth = settings.num_neurons || settings.filters || 1;
+    this.depth = settings.neurons || settings.num_neurons || settings.filters || 1;
     this.l1_decay_mul = settings.l1_decay_mul || 0;
     this.l2_decay_mul = settings.l2_decay_mul || 1;
     this.biases = new Volume(1, 1, this.depth, settings.bias_pref || 0);
@@ -301,7 +329,7 @@ class FullyConnectedLayer extends VectorLayer {
 }
 
 module.exports = FullyConnectedLayer;
-},{"../utils":23,"../volume":24,"./vector_layer":19}],7:[function(require,module,exports){
+},{"../utils":24,"../volume":25,"./vector_layer":19}],7:[function(require,module,exports){
 const Layer = require('../layer');
 
 class InputLayer extends Layer {
@@ -396,7 +424,7 @@ class LRNLayer extends ParentedLayer {
 }
 
 module.exports = LRNLayer;
-},{"../utils":23,"./parented_layer":11}],10:[function(require,module,exports){
+},{"../utils":24,"./parented_layer":11}],10:[function(require,module,exports){
 const ParentedLayer = require('./parented_layer');
 const Volume = require('../volume');
 const Utils = require('../utils');
@@ -452,7 +480,7 @@ class MaxoutLayer extends ParentedLayer {
 }
 
 module.exports = MaxoutLayer;
-},{"../utils":23,"../volume":24,"./parented_layer":11}],11:[function(require,module,exports){
+},{"../utils":24,"../volume":25,"./parented_layer":11}],11:[function(require,module,exports){
 const Layer = require('../layer');
 
 class ParentedLayer extends Layer {
@@ -544,8 +572,9 @@ class PoolLayer extends Layer {
 }
 
 module.exports = PoolLayer;
-},{"../layer":2,"../volume":24}],13:[function(require,module,exports){
+},{"../layer":2,"../volume":25}],13:[function(require,module,exports){
 const VectorLayer = require('./vector_layer');
+const Utils = require('../utils');
 
 class RegressionLayer extends VectorLayer {
   backward(y) { 
@@ -568,7 +597,7 @@ class RegressionLayer extends VectorLayer {
 
 module.exports = RegressionLayer;
 
-},{"./vector_layer":19}],14:[function(require,module,exports){
+},{"../utils":24,"./vector_layer":19}],14:[function(require,module,exports){
 const ActivationLayer = require('./activation_layer');
 
 class ReluLayer extends ActivationLayer {
@@ -640,7 +669,7 @@ class SoftmaxLayer extends VectorLayer {
 }
 
 module.exports = SoftmaxLayer;
-},{"../utils":23,"../volume":24,"./vector_layer":19}],17:[function(require,module,exports){
+},{"../utils":24,"../volume":25,"./vector_layer":19}],17:[function(require,module,exports){
 const VectorLayer = require('./vector_layer');
 
 class SVMLayer extends VectorLayer {
@@ -706,9 +735,11 @@ const SigmoidLayer = require('./layers/sigmoid_layer');
 const SoftmaxLayer = require('./layers/softmax_layer');
 const SVMLayer = require('./layers/svm_layer');
 const TanhLayer = require('./layers/tanh_layer');
+const Serializable = require('./serializable');
 
-class Net {
+class Net extends Serializable {
   constructor() {
+    super();
     this.layers = [];
     this.layerClasses = {};
     this.registerLayers();
@@ -739,14 +770,13 @@ class Net {
     return new this.layerClasses[def.type](def);
   }
 
-  addLayer(def) {
+  addPrelayer(def) {
     if (def.type === 'softmax' || def.type === 'svm' || def.type === 'regression') {
-      this.addLayer({ type: 'fc', num_neurons: def.num_classes || def.num_neurons });
-    } else if ((def.type === 'fc' || def.type === 'conv') && def.bias_pref === undefined) {
-      def.bias_pref = def.activation === 'relu' ? 0.1 : 0;
-    }
-    def.parent = this.layers.length > 0 ? this.layers[this.layers.length -1] : undefined;
-    this.layers.push(this.createLayer(def));
+      this.addLayer({ type: 'fc', num_neurons: def.neurons || def.num_classes || def.num_neurons });
+    }    
+  }
+
+  addPostlayer(def) {
     if (def.activation) {
       let sonDef = { type: def.activation };
       if (def.activation === 'maxout') {
@@ -759,11 +789,45 @@ class Net {
     }
   }
 
+  addLayer(def) {
+    this.addPrelayer(def);
+    if ((def.type === 'fc' || def.type === 'conv') && def.bias_pref === undefined) {
+      def.bias_pref = def.activation === 'relu' ? 0.1 : 0;
+    }
+    def.parent = this.layers.length > 0 ? this.layers[this.layers.length -1] : undefined;
+    this.layers.push(this.createLayer(def));
+    this.addPostlayer(def);
+  }
+
   makeLayers(defs) {
     this.layers = [];
     for (var i = 0; i < defs.length; i += 1) {
       this.addLayer(defs[i]);
     }  
+  }
+
+  build(def) {
+    let defs = [];
+    if (def.input) {
+      def.input.type = 'input';
+      defs.push(def.input);
+    }
+    for (let i = 0; i < def.layers.length; i += 1) {
+      let layer = def.layers[i];
+      if (!layer.iterate) {
+        layer.iterate = 1;
+      }
+      if (!layer.type) {
+        layer.type = 'fc';
+      }
+      for (let j = 0; j < layer.iterate; j += 1) {
+        defs.push(layer);
+      }
+    }
+    if (def.output) {
+      defs.push(def.output);
+    }
+    this.makeLayers(defs);
   }
 
   getInputLayer() {
@@ -809,23 +873,68 @@ class Net {
     }
     return response;
   }
+
+  clone(opts) {
+    const result = opts.isJSON ? {} : new Net();
+    for (let i = 0; i < this.layers.length; i += 1) {
+      result.layers.add(this.layers[i].clone(opts));
+    }
+    return result;
+  }
+
+  assign(src, opts) {
+    this.layers = [];
+    for (let i = 0; i < src.layers.length; i += 1) {
+      let srclayer = src.layers[i];
+      if (i > 0) {
+        srclayer.settings.parent = this.layers[i - 1];
+      }
+      let layer = createLayer(srclayer.settings);
+      layer.volume.assign(srclayer.volume);
+      this.layers.add(layer);
+    }
+  }
 }
 
 module.exports = Net;
-},{"./layers/convolutional_layer":4,"./layers/dropout_layer":5,"./layers/fully_connected_layer":6,"./layers/input_layer":7,"./layers/linear_layer":8,"./layers/lrn_layer":9,"./layers/maxout_layer":10,"./layers/pool_layer":12,"./layers/regression_layer":13,"./layers/relu_layer":14,"./layers/sigmoid_layer":15,"./layers/softmax_layer":16,"./layers/svm_layer":17,"./layers/tanh_layer":18}],21:[function(require,module,exports){
+},{"./layers/convolutional_layer":4,"./layers/dropout_layer":5,"./layers/fully_connected_layer":6,"./layers/input_layer":7,"./layers/linear_layer":8,"./layers/lrn_layer":9,"./layers/maxout_layer":10,"./layers/pool_layer":12,"./layers/regression_layer":13,"./layers/relu_layer":14,"./layers/sigmoid_layer":15,"./layers/softmax_layer":16,"./layers/svm_layer":17,"./layers/tanh_layer":18,"./serializable":22}],21:[function(require,module,exports){
+const Net = require('./net');
+const Trainer = require('./trainer');
+
+class Neurapp {
+  constructor() {
+
+  }
+
+  build(def) {
+    this.net = new Net();
+    this.net.build(def.layers);
+    if (def.trainer) {
+      this.trainer = new Trainer(this.net, def.trainer);
+    } else {
+      this.trainer = new Trainer(this.net, { type: 'adadelta', learning_rate: 0.01, momentum: 0.9, batch_size: 5, l2_decay: 0.0 });
+    }
+  }
+}
+
+module.exports = Neurapp;
+},{"./net":20,"./trainer":23}],22:[function(require,module,exports){
 class Serializable {
-  clone() {
+  clone(isJSON, opts) {
   }
 
-  assign() {
+  assign(opts) {
   }
 
-  toJSON() {
-    return JSON.stringify(this.clone(true));
+  toJSON(opts) {
+    opts.isJSON = true;
+    const result = this.clone(opts);
+    result.className = this.getClassName();
+    return JSON.stringify(result);
   }
 
-  fromJSON(json) {
-    this.assign(JSON.parse(json, true));    
+  fromJSON(opts) {
+    this.assign(JSON.parse(json, opts));    
   }
 
   getClassName() {
@@ -834,7 +943,7 @@ class Serializable {
 }
 
 module.exports = Serializable;
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 const Utils = require('./utils');
 
 class Trainer {
@@ -908,11 +1017,12 @@ class Trainer {
 
   sgdMethod(i, j, gij) {
     if (this.momentum > 0) {
-      dx = this.momentum * gsumi[j] -this.learning_rate * gij;
+      var gsumi = this.gsum[i];
+      var dx = this.momentum * gsumi[j] - this.learning_rate * gij;
       gsumi[j] = dx;
       return dx;
     }
-    return -this.learning_rate * gij;
+    return (-this.learning_rate) * gij;
   }
 
   propagate(x, y, result) {
@@ -970,7 +1080,7 @@ class Trainer {
 }
 
 module.exports = Trainer;
-},{"./utils":23}],23:[function(require,module,exports){
+},{"./utils":24}],24:[function(require,module,exports){
 /**
  * Static class with different transversal utility functions.
  */
@@ -1117,7 +1227,7 @@ Utils.gaussRandomVValue = 0.0;
 
 module.exports = Utils;
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 const Serializable = require('./serializable');
 const Utils = require('./utils');
 
@@ -1189,12 +1299,43 @@ class Volume extends Serializable {
     return new Volume(this.width, this.height, this.depth, 0.0);
   }
 
-  clone() {
-    const V = this.cloneAndZero();
+  clone(opts) {
+    let V;
+    if (opts.isJSON) {
+      V = { width: this.width, height: this.height, depth: this.depth };
+      V.w = Utils.zeros(this.size);
+      V.dw = Utils.zeros(this.size);
+    } else {
+      V = this.cloneAndZero();
+    }
     for (var i = 0; i < this.size; i += 1) {
       V.w[i] = this.w[i];
     }
+    if (opts.isSnapshot) {
+      for (var i = 0; i < this.size; i += 1) {
+        V.dw[i] = this.dw[i];
+      }
+    } else {
+      delete V.dw;
+    }
     return V;
+  }
+    
+  assign(src, opts) {
+    this.width = src.width;
+    this.height = src.height;
+    this.depth = src.depth;
+    this.size = this.width * this.height * this.depth;
+    this.w = Utils.zeros(this.size);
+    this.dw = Utils.zeros(this.size);
+    for (var i = 0; i < this.size; i += 1) {
+      this.w[i] = src.w[i];
+    }
+    if (src.dw) {
+      for (var i = 0; i < this.size; i += 1) {
+        this.dw[i] = src.dw[i];
+      }
+    }
   }
 
   addFrom(V) { 
@@ -1258,5 +1399,5 @@ class Volume extends Serializable {
 
 module.exports = Volume;
 
-},{"./serializable":21,"./utils":23}]},{},[1])(1)
+},{"./serializable":22,"./utils":24}]},{},[1])(1)
 });

@@ -47,6 +47,33 @@ class Layer extends Serializable {
   getSize() {
     return this.width * this.height * this.depth;
   }
+
+  clone(opts) {
+    let result;
+    let settings = JSON.parse(JSON.stringify(this.settings))
+    if (opts.isJSON) {
+      result = {};
+      result.settings = settings;
+      result.width = this.width;
+      result.height = this.height;
+      result.depth = this.depth;
+    } else {
+      result = new this.constructor(settings);
+    }
+    if (this.volume) {
+      result.volume = this.clone(opts);
+    }
+    return result;
+  }
+
+  assign(src, opts) {
+    this.settings = JSON.parse(JSON.stringify(this.settings))
+    this.parent = settings.parent;
+    this.width = src.width;
+    this.height = src.height;
+    this.depth = src.depth;
+    this.volume.assign(src.volume);
+  }
 }
 
 module.exports = Layer;

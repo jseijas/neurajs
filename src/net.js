@@ -12,9 +12,11 @@ const SigmoidLayer = require('./layers/sigmoid_layer');
 const SoftmaxLayer = require('./layers/softmax_layer');
 const SVMLayer = require('./layers/svm_layer');
 const TanhLayer = require('./layers/tanh_layer');
+const Serializable = require('./serializable');
 
-class Net {
+class Net extends Serializable {
   constructor() {
+    super();
     this.layers = [];
     this.layerClasses = {};
     this.registerLayers();
@@ -47,7 +49,7 @@ class Net {
 
   addPrelayer(def) {
     if (def.type === 'softmax' || def.type === 'svm' || def.type === 'regression') {
-      this.addLayer({ type: 'fc', num_neurons: def.num_classes || def.num_neurons });
+      this.addLayer({ type: 'fc', num_neurons: def.neurons || def.num_classes || def.num_neurons });
     }    
   }
 
@@ -79,6 +81,30 @@ class Net {
     for (var i = 0; i < defs.length; i += 1) {
       this.addLayer(defs[i]);
     }  
+  }
+
+  build(def) {
+    let defs = [];
+    if (def.input) {
+      def.input.type = 'input';
+      defs.push(def.input);
+    }
+    for (let i = 0; i < def.layers.length; i += 1) {
+      let layer = def.layers[i];
+      if (!layer.iterate) {
+        layer.iterate = 1;
+      }
+      if (!layer.type) {
+        layer.type = 'fc';
+      }
+      for (let j = 0; j < layer.iterate; j += 1) {
+        defs.push(layer);
+      }
+    }
+    if (def.output) {
+      defs.push(def.output);
+    }
+    this.makeLayers(defs);
   }
 
   getInputLayer() {
@@ -123,6 +149,27 @@ class Net {
       }
     }
     return response;
+  }
+
+  clone(opts) {
+    const result = opts.isJSON ? {} : new Net();
+    for (let i = 0; i < this.layers.length; i += 1) {
+      result.layers.add(this.layers[i].clone(opts));
+    }
+    return result;
+  }
+
+  assign(src, opts) {
+    this.layers = [];
+    for (let i = 0; i < src.layers.length; i += 1) {
+      let srclayer = src.layers[i];
+      if (i > 0) {
+        srclayer.settings.parent = this.layers[i - 1];
+      }
+      let layer = createLayer(srclayer.settings);
+      layer.volume.assign(srclayer.volume);
+      this.layers.add(layer);
+    }
   }
 }
 

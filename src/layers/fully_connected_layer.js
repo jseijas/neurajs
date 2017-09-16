@@ -6,7 +6,7 @@ class FullyConnectedLayer extends VectorLayer {
   constructor(settings) {
     super(settings);
     settings = settings || {};
-    this.depth = settings.num_neurons || settings.filters || 1;
+    this.depth = settings.neurons || settings.num_neurons || settings.filters || 1;
     this.l1_decay_mul = settings.l1_decay_mul || 0;
     this.l2_decay_mul = settings.l2_decay_mul || 1;
     this.biases = new Volume(1, 1, this.depth, settings.bias_pref || 0);

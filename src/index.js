@@ -21,5 +21,6 @@ module.exports = {
   TanhLayer : require('./layers/tanh_layer'),
   VectorLayer : require('./layers/vector_layer'),
   Net : require('./net'),
-  Trainer: require('./trainer')
+  Trainer: require('./trainer'),
+  Neurapp: require('./neurapp')
 }

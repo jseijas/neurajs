@@ -71,11 +71,12 @@ class Trainer {
 
   sgdMethod(i, j, gij) {
     if (this.momentum > 0) {
-      dx = this.momentum * gsumi[j] -this.learning_rate * gij;
+      var gsumi = this.gsum[i];
+      var dx = this.momentum * gsumi[j] - this.learning_rate * gij;
       gsumi[j] = dx;
       return dx;
     }
-    return -this.learning_rate * gij;
+    return (-this.learning_rate) * gij;
   }
 
   propagate(x, y, result) {

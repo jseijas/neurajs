@@ -1,16 +1,19 @@
 class Serializable {
-  clone() {
+  clone(isJSON, opts) {
   }
 
-  assign() {
+  assign(opts) {
   }
 
-  toJSON() {
-    return JSON.stringify(this.clone(true));
+  toJSON(opts) {
+    opts.isJSON = true;
+    const result = this.clone(opts);
+    result.className = this.getClassName();
+    return JSON.stringify(result);
   }
 
-  fromJSON(json) {
-    this.assign(JSON.parse(json, true));    
+  fromJSON(opts) {
+    this.assign(JSON.parse(json, opts));    
   }
 
   getClassName() {

@@ -1,4 +1,5 @@
 const VectorLayer = require('./vector_layer');
+const Utils = require('../utils');
 
 class RegressionLayer extends VectorLayer {
   backward(y) { 
