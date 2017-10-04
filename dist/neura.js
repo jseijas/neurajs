@@ -1301,6 +1301,7 @@ class Volume extends Serializable {
 
   clone(opts) {
     let V;
+    opts = opts | {};
     if (opts.isJSON) {
       V = { width: this.width, height: this.height, depth: this.depth };
       V.w = Utils.zeros(this.size);
